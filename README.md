@@ -27,15 +27,27 @@ Then load the extension:
 
 ## Pricing
 
-**3 free analyses** included. Unlimited analyses: ~~$9.9~~ **$5** — one-time payment, lifetime updates.
+**3 次免费分析**，无限次需激活码。~~$9.9~~ **$5（≈¥35）** — 一次性买断，永久更新。
 
-### How to get an activation code
+### 购买激活码
 
-1. 微信转账 ¥35 或 PayPal $5 至 **2115464137@qq.com**
-2. 备注留你的邮箱，或 DM 我：V2EX [@Leo-Ayh-Oday](https://v2ex.com)
-3. 收到激活码后在扩展里粘贴 → 永久解锁
+**方式一：微信**
 
-> 付款后 24 小时内发码。有问题直接加微信 **Leo_Ayh**。
+加微信 **Leo_Ayh** → 转账 ¥35 → 我发你激活码 → 粘贴解锁
+
+**方式二：PayPal**
+
+转 $5 至 **2115464137@qq.com** → 备注邮箱 → 24 小时内发码到邮箱
+
+**方式三：V2EX**
+
+站内 DM [@Leo-Ayh-Oday](https://v2ex.com)，说明要激活码
+
+---
+
+![分析报告截图](images/screenshot.png)
+
+> 代码 100% 本地分析，数据不出电脑。无需 API Key，无需联网。
 
 ## Scoring
 

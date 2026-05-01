@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Slop 检测器 — 分析报告</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:#0d0d0d;color:#e0e0e0;
+  font-family:-apple-system,BlinkMacSystemFont,'Microsoft YaHei','PingFang SC',sans-serif;
+  display:flex;justify-content:center;align-items:center;
+  min-height:100vh;padding:20px;
+  -webkit-font-smoothing:antialiased;
+}
+.report{
+  width:460px;background:#1a1a1a;border:1px solid #333;
+  border-radius:12px;padding:24px;overflow:hidden;
+}
+.header{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.header-icon{
+  width:36px;height:36px;background:#6366f1;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:#fff;font-weight:700;
+}
+.header-text h2{font-size:15px;font-weight:600}
+.header-text span{font-size:10px;color:#888}
+.repo-name{
+  font-size:11px;color:#666;margin-bottom:16px;
+  font-family:'JetBrains Mono','Cascadia Code',monospace;
+}
+.score-card{
+  background:#242424;border:1px solid #333;
+  border-radius:10px;padding:20px;margin-bottom:16px;
+}
+.score-row{display:flex;align-items:center;justify-content:space-between}
+.score-num{font-size:42px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.score-right{text-align:right}
+.verdict{
+  display:inline-block;padding:4px 12px;border-radius:4px;
+  font-size:12px;font-weight:600;letter-spacing:.03em;
+  background:rgba(245,158,11,0.1);color:#f59e0b;
+}
+.score-bar{
+  height:8px;background:#1a1a1a;border-radius:4px;
+  margin:14px 0;overflow:hidden;
+}
+.score-bar-fill{
+  height:100%;border-radius:4px;
+  background:linear-gradient(90deg,#f59e0b,#eab308);
+  width:42%;transition:width 1s ease;
+}
+.stats{
+  display:flex;gap:20px;font-size:10px;color:#888;
+  border-top:1px solid #333;padding-top:12px;
+}
+.stats strong{color:#e0e0e0}
+.flags-title{
+  font-size:9px;color:#888;text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:10px;
+}
+.flag{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:1px solid #242424;
+}
+.flag-dot{
+  width:10px;height:10px;border-radius:50%;flex-shrink:0;
+}
+.dot-red{background:#ef4444}.dot-amber{background:#f59e0b}.dot-mute{background:#666}
+.flag-name{flex:1;font-size:13px}
+.flag-score{font-size:11px;color:#888;font-family:monospace}
+.flag-evidence{
+  font-size:10px;color:#666;padding-left:20px;
+  padding-bottom:8px;border-bottom:1px solid #242424;
+  line-height:1.8;
+}
+.recs-title{
+  font-size:9px;color:#888;text-transform:uppercase;
+  letter-spacing:.06em;margin:16px 0 8px;
+}
+.rec{font-size:11px;color:#888;padding:4px 0 4px 14px;position:relative}
+.rec::before{content:'•';position:absolute;left:0;color:#6366f1}
+.footer{
+  margin-top:16px;padding-top:12px;border-top:1px solid #333;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.footer span{font-size:10px;color:#888}
+.footer .badge{
+  padding:3px 8px;background:rgba(34,197,94,0.1);
+  color:#22c55e;border-radius:4px;font-size:10px;font-weight:600;
+}
+</style>
+</head>
+<body>
+<div class="report">
+  <div class="header">
+    <div class="header-icon">S</div>
+    <div class="header-text">
+      <h2>AI Slop 检测器</h2>
+      <span>分析报告</span>
+    </div>
+  </div>
+
+  <div class="repo-name">github.com/someuser/ai-generated-project</div>
+
+  <div class="score-card">
+    <div class="score-row">
+      <span class="score-num" style="color:#f59e0b">42</span>
+      <div class="score-right">
+        <span class="verdict">可疑</span>
+        <div style="font-size:10px;color:#888;margin-top:4px">满分 100</div>
+      </div>
+    </div>
+    <div class="score-bar">
+      <div class="score-bar-fill"></div>
+    </div>
+    <div class="stats">
+      <span>文件: <strong>73</strong></span>
+      <span>提交: <strong>2</strong></span>
+      <span>贡献者: <strong>1</strong></span>
+      <span>代码行: <strong>4,212</strong></span>
+    </div>
+  </div>
+
+  <div class="flags-title">🔴 红旗信号 — 6 项</div>
+
+  <div class="flag">
+    <span class="flag-dot dot-red"></span>
+    <span class="flag-name">提交炸弹</span>
+    <span class="flag-score">10.0 / 10</span>
+  </div>
+  <div class="flag-evidence">仅 2 次提交，全部代码一次性塞入，无渐进式开发痕迹</div>
+
+  <div class="flag">
+    <span class="flag-dot dot-red"></span>
+    <span class="flag-name">零测试</span>
+    <span class="flag-score">10.0 / 10</span>
+  </div>
+  <div class="flag-evidence">没有找到任何测试文件，但 README 声称"生产就绪"</div>
+
+  <div class="flag">
+    <span class="flag-dot dot-red"></span>
+    <span class="flag-name">幽灵依赖</span>
+    <span class="flag-score">10.0 / 10</span>
+  </div>
+  <div class="flag-evidence">6 个包不在已知注册表中：rich, click, chardet, git, pathspec...</div>
+
+  <div class="flag">
+    <span class="flag-dot dot-red"></span>
+    <span class="flag-name">单人开发</span>
+    <span class="flag-score">10.0 / 10</span>
+  </div>
+  <div class="flag-evidence">整个仓库只有 1 个作者邮箱，典型 AI 生成项目特征</div>
+
+  <div class="flag">
+    <span class="flag-dot dot-amber"></span>
+    <span class="flag-name">命名随意</span>
+    <span class="flag-score">3.0 / 10</span>
+  </div>
+  <div class="flag-evidence">6400 个标识符中 113 个用词过于宽泛（1.8%）。高频：config(57次), result(18次), obj(12次)</div>
+
+  <div class="flag">
+    <span class="flag-dot dot-mute"></span>
+    <span class="flag-name">占位符残留</span>
+    <span class="flag-score">2.0 / 10</span>
+  </div>
+  <div class="flag-evidence">4,212 行代码中 6 个 TODO/pass/NotImplemented 占位符（每千行 1.4 个）</div>
+
+  <div class="recs-title">💡 改进建议</div>
+  <div class="rec">将大量提交拆分为逻辑清晰的增量提交</div>
+  <div class="rec">添加单元测试——别在没测试的情况下声称生产就绪</div>
+  <div class="rec">检查 import 的包是否真实存在于对应语言的包管理器中</div>
+  <div class="rec">单人仓库在 AI 生成项目中非常常见，请复查代码质量</div>
+
+  <div class="footer">
+    <span>github.com/Leo-Ayh-Oday/slop-detector</span>
+    <span class="badge">本地分析 · 数据不出电脑</span>
+  </div>
+</div>
+</body>
+</html>
