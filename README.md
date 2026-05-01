@@ -25,6 +25,18 @@ Then load the extension:
 3. Click **Load unpacked** → select the `extension/` folder
 4. Browse any GitHub repo → click the extension icon → **Analyze Repository**
 
+## Pricing
+
+**3 free analyses** included. Unlimited analyses: ~~$9.9~~ **$5** — one-time payment, lifetime updates.
+
+### How to get an activation code
+
+1. 微信转账 ¥35 或 PayPal $5 至 **2115464137@qq.com**
+2. 备注留你的邮箱，或 DM 我：V2EX [@Leo-Ayh-Oday](https://v2ex.com)
+3. 收到激活码后在扩展里粘贴 → 永久解锁
+
+> 付款后 24 小时内发码。有问题直接加微信 **Leo_Ayh**。
+
 ## Scoring
 
 | Score | Verdict |
