@@ -369,7 +369,7 @@ class SlopDetector:
 
         if not has_tests and readme_claims:
             score = 10.0
-            evidence.append("0 个测试文件，但 README 自称"生产就绪"")
+            evidence.append("0 个测试文件，但 README 自称生产就绪")
             evidence.extend(readme_claims[:3])
         elif not has_tests:
             score = 7.0
@@ -661,7 +661,18 @@ class SlopDetector:
 
             if score > 0:
                 sev = "high" if score >= 7 else "medium" if score >= 4 else "low"
-                label = flag_id.replace("_", " ").title()
+                LABEL_MAP = {
+                    "commit_bombing": "提交炸弹",
+                    "generic_naming": "命名随意",
+                    "over_commenting": "废话注释",
+                    "no_tests": "零测试",
+                    "hallucinated_imports": "幽灵依赖",
+                    "single_contributor": "单人开发",
+                    "template_structure": "模板残留",
+                    "spray_pray_prs": "垃圾分支",
+                    "placeholder_todos": "占位符残留",
+                }
+                label = LABEL_MAP.get(flag_id, flag_id.replace("_", " ").title())
 
                 self.red_flags.append({
                     "id": flag_id,
@@ -704,7 +715,7 @@ class SlopDetector:
             "commit_bombing": "将大量提交拆分为逻辑清晰的增量提交，提高可审查性",
             "generic_naming": "将 data/temp/result 等泛词替换为领域相关的具体名称",
             "over_commenting": "删除废话注释，代码应当通过清晰的命名自我解释",
-            "no_tests": "补充单元测试——没有测试就别宣称"生产就绪"",
+            "no_tests": "补充单元测试——没有测试就别宣称生产就绪",
             "hallucinated_imports": "检查所有 import 的包是否真实存在于对应语言的注册表中",
             "single_contributor": "复查代码历史——单人仓库在 AI 生成项目中非常常见",
             "template_structure": "项目似乎基于脚手架模板且几乎未做修改",
