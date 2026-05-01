@@ -8,7 +8,7 @@
 </head>
 <body>
 
-<!-- ── 空闲状态 ── -->
+<!-- Idle -->
 <div id="state-idle" class="state active">
   <div class="header">
     <div class="header-icon">S</div>
@@ -21,18 +21,18 @@
     <label>GitHub 仓库地址</label>
     <input id="repo-url" type="text" placeholder="https://github.com/user/repo">
   </div>
-  <button class="btn" id="analyze-btn" onclick="startAnalysis()">分析仓库</button>
+  <button class="btn" id="analyze-btn">分析仓库</button>
   <div id="status-msg" class="status-text"></div>
   <div class="usage-counter" id="usage-counter">
     免费次数：<strong id="remaining-count">3</strong> 次
   </div>
   <div class="footer">
-    <span id="server-indicator" class="server-offline">服务器：检测中...</span>
+    <span id="server-indicator">服务器：检测中...</span>
     <span>v1.0</span>
   </div>
 </div>
 
-<!-- ── 加载状态 ── -->
+<!-- Loading -->
 <div id="state-loading" class="state">
   <div class="header">
     <div class="header-icon">S</div>
@@ -41,7 +41,7 @@
       <span>分析中...</span>
     </div>
     <div class="header-actions">
-      <button class="header-btn" onclick="cancelAnalysis()">取消</button>
+      <button class="header-btn" id="cancel-btn">取消</button>
     </div>
   </div>
   <div class="loading-spinner">
@@ -50,7 +50,7 @@
   </div>
 </div>
 
-<!-- ── 结果状态 ── -->
+<!-- Results -->
 <div id="state-results" class="state">
   <div class="header">
     <div class="header-icon">S</div>
@@ -62,11 +62,11 @@
   <div id="score-card" class="score-card fade-in"></div>
   <div id="flags-list"></div>
   <div id="recommendations"></div>
-  <button class="btn" style="margin-top:12px" onclick="showState('idle')">再分析一个</button>
+  <button class="btn" style="margin-top:12px" id="analyze-another-btn">再分析一个</button>
   <div class="usage-counter" id="usage-counter-2"></div>
 </div>
 
-<!-- ── 付费墙 ── -->
+<!-- Paywall -->
 <div id="state-paywall" class="state">
   <div class="header">
     <div class="header-icon">S</div>
@@ -81,17 +81,17 @@
     <div class="input-group">
       <input id="activation-code" type="text" placeholder="SLOP-XXXX-XXXX" style="text-align:center;font-family:var(--font-mono)">
     </div>
-    <button class="btn" onclick="activateCode()">激活</button>
+    <button class="btn" id="activate-btn">激活</button>
     <div id="activate-status" class="status-text"></div>
     <a class="paywall-link" href="https://github.com/Leo-Ayh-Oday/slop-detector#%E8%B4%AD%E4%B9%B0%E6%BF%80%E6%B4%BB%E7%A0%81" target="_blank">如何获取激活码？</a>
   </div>
   <div class="footer" style="margin-top:12px">
-    <button class="header-btn" onclick="showState('idle')">← 返回</button>
+    <button class="header-btn" id="paywall-back-btn">← 返回</button>
     <span>v1.0</span>
   </div>
 </div>
 
-<!-- ── 错误状态 ── -->
+<!-- Error -->
 <div id="state-error" class="state">
   <div class="header">
     <div class="header-icon">S</div>
@@ -104,10 +104,10 @@
     <h3 id="error-title">无法连接服务器</h3>
     <p id="error-msg">检测不到本地服务器。</p>
     <p>请先启动服务器：<br><code>python server.py</code></p>
-    <button class="btn btn-sm" onclick="checkServer()" style="margin-top:8px">重试</button>
+    <button class="btn btn-sm" id="retry-btn" style="margin-top:8px">重试</button>
   </div>
   <div class="footer" style="margin-top:12px">
-    <button class="header-btn" onclick="showState('idle')">← 返回</button>
+    <button class="header-btn" id="error-back-btn">← 返回</button>
     <span>v1.0</span>
   </div>
 </div>

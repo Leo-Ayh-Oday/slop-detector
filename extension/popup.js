@@ -265,8 +265,22 @@ async function activateCode() {
 
 // ── 初始化 ──
 
+function bindEvents() {
+  // Bind all button events (no inline onclick)
+  const safe = (el, event, fn) => { if (el) el.addEventListener(event, fn); };
+
+  safe($('analyze-btn'), 'click', startAnalysis);
+  safe($('cancel-btn'), 'click', cancelAnalysis);
+  safe($('analyze-another-btn'), 'click', () => showState('idle'));
+  safe($('activate-btn'), 'click', activateCode);
+  safe($('retry-btn'), 'click', checkServer);
+  safe($('paywall-back-btn'), 'click', () => showState('idle'));
+  safe($('error-back-btn'), 'click', () => showState('idle'));
+}
+
 async function init() {
   try {
+    bindEvents();
     await prefillRepoUrl();
     await checkServer();
     const { remaining, activated } = await getUsageInfo();
@@ -281,7 +295,7 @@ async function init() {
 
 document.addEventListener('DOMContentLoaded', init);
 
-// Enter 快捷键
+// Enter key shortcuts
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && currentState === 'idle') { e.preventDefault(); startAnalysis(); }
   if (e.key === 'Enter' && currentState === 'paywall') { e.preventDefault(); activateCode(); }
