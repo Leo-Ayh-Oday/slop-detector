@@ -343,7 +343,16 @@ async def slop_endpoint(req: SlopRequest):
     tmp = tempfile.mkdtemp(prefix="slop_")
     try:
         import git
-        git.Repo.clone_from(req.repo_url, tmp, branch=req.branch, depth=50)
+        # Try requested branch first, fall back to common defaults
+        for branch in (req.branch, "main", "master"):
+            try:
+                git.Repo.clone_from(req.repo_url, tmp, branch=branch, depth=50)
+                break
+            except Exception:
+                shutil.rmtree(tmp, ignore_errors=True)
+                tmp = tempfile.mkdtemp(prefix="slop_")
+        else:
+            raise Exception("Could not clone with any branch (tried: main, master)")
     except Exception as e:
         shutil.rmtree(tmp, ignore_errors=True)
         raise HTTPException(400, f"Clone failed: {e}")
