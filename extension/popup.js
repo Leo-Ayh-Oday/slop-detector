@@ -16,13 +16,13 @@ async function getState() {
   try {
     return await chrome.runtime.sendMessage({ action: 'getState' });
   } catch (e) {
-    return { usageCount: 0, activated: false, serverUrl: 'http://localhost:8766' };
+    return { usageCount: 0, activated: false, serverUrl: 'http://127.0.0.1:8766' };
   }
 }
 
 async function getServerUrl() {
   const s = await getState();
-  return s.serverUrl || 'http://localhost:8766';
+  return s.serverUrl || 'http://127.0.0.1:8766';
 }
 
 async function getUsageInfo() {

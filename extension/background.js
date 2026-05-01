@@ -10,7 +10,7 @@ const STORAGE_KEYS = {
 const DEFAULTS = {
   USAGE_COUNT: 0,
   ACTIVATED: false,
-  SERVER_URL: 'http://localhost:8766',
+  SERVER_URL: 'http://127.0.0.1:8766',
 };
 
 // Initialize storage on install

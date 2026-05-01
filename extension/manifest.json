@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Detect AI-generated slop in any GitHub repository with one click.",
   "permissions": ["storage", "activeTab"],
-  "host_permissions": ["https://github.com/*", "http://localhost:8766/*"],
+  "host_permissions": ["https://github.com/*", "http://127.0.0.1:8766/*"],
   "action": {
     "default_popup": "popup.html",
     "default_title": "AI Slop Detector",
