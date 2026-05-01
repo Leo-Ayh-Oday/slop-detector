@@ -1,39 +1,37 @@
-# AI Slop Detector
+# AI Slop 检测器 🔍
 
-Detect AI-generated code patterns in any GitHub repository. One click, instant report.
+输入 GitHub 仓库链接，一键识别 AI 生成的代码。0-100 分 + 红灯信号 + 改进建议。
 
-## How it works
+## 原理
 
-1. Extension sends the repo URL to a local Python server
-2. Server clones the repo, scans all source files with tree-sitter
-3. 9 heuristic detectors check for AI slop patterns
-4. Returns a 0-100 score with red flags and recommendations
+1. 扩展把仓库 URL 发给本地 Python 后端
+2. 后端克隆仓库，用 tree-sitter 解析所有源代码
+3. 9 个启发式检测器挨个扫描 AI 痕迹
+4. 返回综合评分和详细报告
 
-**Your code never leaves your machine.** No API keys, no cloud, fully local.
+**代码 100% 本地分析，数据不出电脑。** 不要 API Key，不联网，完全本地。
 
-## Quick Start
+## 快速开始
 
 ```bash
 pip install -r requirements.txt
 python server.py
 ```
 
-Then load the extension:
+然后加载扩展：
 
-1. Open `edge://extensions` (or `chrome://extensions`)
-2. Enable **Developer mode**
-3. Click **Load unpacked** → select the `extension/` folder
-4. Browse any GitHub repo → click the extension icon → **Analyze Repository**
+1. 打开 `edge://extensions`（或 `chrome://extensions`）
+2. 开启 **开发者模式**
+3. 点 **加载解压缩的扩展** → 选择 `extension/` 文件夹
+4. 浏览任意 GitHub 仓库 → 点工具栏图标 → **分析仓库**
 
-## Pricing
+## 购买激活码
 
-**3 次免费分析**，无限次需激活码。~~$9.9~~ **$5（≈¥35）** — 一次性买断，永久更新。
+**3 次免费分析**。无限次：**¥35 一次性买断**，永久更新。
 
-### 购买激活码
+加微信 **f01290724** → 转账 ¥35 → 发激活码 → 粘贴解锁
 
-加微信 **f01290724** → 转账 ¥35 → 我发你激活码 → 粘贴解锁
-
-3 次免费用完后再付，觉得有用再买。有问题 V2EX 站内 DM [@Leo-Ayh-Oday](https://v2ex.com)。
+3 次免费用完再付，觉得有用再买。有问题 V2EX 站内 DM [@Leo-Ayh-Oday](https://v2ex.com)。
 
 ---
 
@@ -41,31 +39,31 @@ Then load the extension:
 
 > 代码 100% 本地分析，数据不出电脑。无需 API Key，无需联网。
 
-## Scoring
+## 评分体系
 
-| Score | Verdict |
-|-------|---------|
-| 80-100 | Clean |
-| 40-79 | Suspicious |
-| 0-39 | Likely AI Slop |
+| 分数 | 判定 |
+|------|------|
+| 80-100 | 干净 |
+| 40-79 | 可疑 |
+| 0-39 | 极可能 AI 生成 |
 
-## 9 Detection Signals
+## 9 大检测指标
 
-- **Commit Bombing** — all code in 1-2 massive commits
-- **Generic Naming** — `data`, `temp`, `result` everywhere
-- **Over-commenting** — obvious comments, comment-to-code ratio >40%
-- **No Tests** — zero tests but README claims "production-ready"
-- **Hallucinated Imports** — importing packages that don't exist
-- **Single Contributor** — only one author in git history
-- **Template Structure** — matching stock scaffold with no changes
-- **Spray-and-Pray PRs** — lots of single-commit branches named `fix`, `update`, `wip`
-- **Placeholder TODOs** — `# TODO`, `pass`, `NotImplementedError` density
+- **提交炸弹** — 所有代码 1-2 次提交塞完，无渐进开发痕迹
+- **命名随意** — `data`、`temp`、`result` 到处飞
+- **废话注释** — `// 自增计数` 这种注释太多，注释代码比超 40%
+- **零测试** — 没有测试文件但 README 写"生产就绪"
+- **幽灵依赖** — import 了根本不存在的包
+- **单人开发** — 整个 git 历史就一个作者
+- **模板残留** — 文件结构跟脚手架模板一模一样没改过
+- **垃圾分支** — 大量 `fix`、`update`、`wip` 分支各含一次提交
+- **占位符残留** — `# TODO`、`pass`、`NotImplementedError` 满屏飞
 
-## Requirements
+## 环境要求
 
 - Python 3.10+
-- Git (for cloning repos)
-- Chrome or Edge browser
+- Git（用于克隆仓库）
+- Chrome 或 Edge 浏览器
 
 ## License
 

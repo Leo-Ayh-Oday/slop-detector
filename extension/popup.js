@@ -1,11 +1,8 @@
-// AI Slop Detector — Popup Logic v1.1
+// AI Slop 检测器 — 弹窗逻辑 v1.2
 
 const MAX_FREE = 3;
 let currentState = 'idle';
 let abortController = null;
-let serverReachable = false;
-
-// ── Helpers ──
 
 function $(id) { return document.getElementById(id); }
 
@@ -19,181 +16,122 @@ async function getState() {
   try {
     return await chrome.runtime.sendMessage({ action: 'getState' });
   } catch (e) {
-    console.error('getState failed:', e);
     return { usageCount: 0, activated: false, serverUrl: 'http://localhost:8766' };
   }
 }
 
 async function getServerUrl() {
-  const state = await getState();
-  return state.serverUrl || 'http://localhost:8766';
+  const s = await getState();
+  return s.serverUrl || 'http://localhost:8766';
 }
 
 async function getUsageInfo() {
-  const state = await getState();
+  const s = await getState();
   return {
-    used: state.usageCount ?? 0,
-    remaining: Math.max(0, MAX_FREE - (state.usageCount ?? 0)),
-    activated: state.activated ?? false,
+    used: s.usageCount ?? 0,
+    remaining: Math.max(0, MAX_FREE - (s.usageCount ?? 0)),
+    activated: s.activated ?? false,
   };
 }
 
 async function afterAnalysis() {
   try {
-    const resp = await chrome.runtime.sendMessage({ action: 'incrementUsage' });
-    return resp?.usageCount ?? 0;
-  } catch (e) {
-    return 0;
-  }
+    const r = await chrome.runtime.sendMessage({ action: 'incrementUsage' });
+    return r?.usageCount ?? 0;
+  } catch (e) { return 0; }
 }
 
 async function setActivated() {
-  try {
-    await chrome.runtime.sendMessage({ action: 'activate' });
-  } catch (e) {
-    console.error('activate failed:', e);
-  }
+  try { await chrome.runtime.sendMessage({ action: 'activate' }); } catch (e) {}
 }
 
-// ── UI ──
-
-function showState(stateName) {
+function showState(name) {
   document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
-  const target = $(`state-${stateName}`);
-  if (target) {
-    target.classList.add('active');
-    currentState = stateName;
-  }
+  const t = $(`state-${name}`);
+  if (t) { t.classList.add('active'); currentState = name; }
 }
 
 function setStatus(msg, isError) {
   const el = $('status-msg');
-  if (el) {
-    el.textContent = msg;
-    el.style.color = isError ? 'var(--red)' : 'var(--text-muted)';
-  }
+  if (el) { el.textContent = msg; el.style.color = isError ? 'var(--red)' : 'var(--text-muted)'; }
 }
 
-// ── Server check ──
+// ── 服务器检查 ──
 
 async function checkServer() {
   const indicator = $('server-indicator');
-  const serverUrl = await getServerUrl();
+  const url = await getServerUrl();
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
-    const resp = await fetch(`${serverUrl}/api/status`, { signal: controller.signal });
-    clearTimeout(timer);
-    if (resp.ok) {
-      serverReachable = true;
-      if (indicator) {
-        indicator.textContent = 'Server: online';
-        indicator.style.color = 'var(--green)';
-      }
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 3000);
+    const r = await fetch(`${url}/api/status`, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (r.ok) {
+      if (indicator) { indicator.textContent = '服务器：已连接'; indicator.style.color = 'var(--green)'; }
       return true;
     }
-  } catch (e) {
-    // offline
-  }
-  serverReachable = false;
-  if (indicator) {
-    indicator.textContent = 'Server: offline (run python server.py)';
-    indicator.style.color = 'var(--red)';
-  }
+  } catch (e) {}
+  if (indicator) { indicator.textContent = '服务器：离线（请先运行 python server.py）'; indicator.style.color = 'var(--red)'; }
   return false;
 }
 
-// ── Pre-fill URL ──
+// ── 预填 URL ──
 
 async function prefillRepoUrl() {
   try {
-    const resp = await chrome.runtime.sendMessage({ action: 'getActiveTabUrl' });
+    const r = await chrome.runtime.sendMessage({ action: 'getActiveTabUrl' });
     const input = $('repo-url');
-    if (input && resp?.url) {
-      input.value = resp.url;
-    }
-  } catch (e) {
-    console.error('prefillRepoUrl failed:', e);
-  }
+    if (input && r?.url) input.value = r.url;
+  } catch (e) {}
 }
 
-// ── Analysis ──
+// ── 分析 ──
 
 async function startAnalysis() {
-  console.log('startAnalysis called');
   const url = ($('repo-url').value || '').trim();
 
-  if (!url) {
-    // Try to manually enter URL
-    setStatus('Enter a GitHub repo URL (e.g. https://github.com/user/repo)', true);
-    return;
-  }
+  if (!url) { setStatus('请输入 GitHub 仓库地址，如 https://github.com/user/repo', true); return; }
+  if (!url.includes('github.com')) { setStatus('仅支持 GitHub 仓库', true); return; }
 
-  if (!url.includes('github.com')) {
-    setStatus('Only GitHub repositories are supported.', true);
-    return;
-  }
-
-  // Check free tier
   const { remaining, activated } = await getUsageInfo();
-  console.log('Usage:', { remaining, activated });
-  if (!activated && remaining <= 0) {
-    showState('paywall');
-    return;
-  }
+  if (!activated && remaining <= 0) { showState('paywall'); return; }
 
-  // Check server
   const online = await checkServer();
-  console.log('Server online:', online);
   if (!online) {
     showState('error');
-    $('error-title').textContent = 'Server Unreachable';
-    $('error-msg').textContent = 'Cannot connect to localhost:8766. Make sure the server is running.';
+    $('error-title').textContent = '无法连接服务器';
+    $('error-msg').textContent = '请先启动本地服务器：python server.py';
     return;
   }
 
   showState('loading');
-  $('loading-status').textContent = 'Cloning repository...';
+  $('loading-status').textContent = '正在克隆仓库...';
   setStatus('');
 
   abortController = new AbortController();
   const serverUrl = await getServerUrl();
 
-  // Progress simulation
   const progressTimer = setTimeout(() => {
-    $('loading-status').textContent = 'Scanning files for slop patterns...';
+    $('loading-status').textContent = '正在扫描代码...';
   }, 3000);
 
   try {
-    // Manual timeout wrapper (compatible with older Chrome/Edge)
-    const timeoutId = setTimeout(() => abortController.abort(), 25000);
-
+    const timeoutId = setTimeout(() => abortController.abort(), 30000);
     const resp = await fetch(`${serverUrl}/api/slop`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ repo_url: url, branch: 'main' }),
       signal: abortController.signal,
     });
-
     clearTimeout(timeoutId);
     clearTimeout(progressTimer);
 
-    if (!resp.ok) {
-      const errText = await resp.text();
-      throw new Error(errText || `Server returned ${resp.status}`);
-    }
+    if (!resp.ok) throw new Error((await resp.text()) || `服务器返回 ${resp.status}`);
 
     const report = await resp.json();
-    console.log('Report:', report);
 
-    // Increment usage
-    let usageInfo;
-    if (!activated) {
-      await afterAnalysis();
-      usageInfo = await getUsageInfo();
-    } else {
-      usageInfo = await getUsageInfo();
-    }
+    if (!activated) { await afterAnalysis(); }
+    const usageInfo = await getUsageInfo();
 
     renderResults(report, url, usageInfo);
     showState('results');
@@ -201,11 +139,10 @@ async function startAnalysis() {
     clearTimeout(progressTimer);
     if (e.name === 'AbortError') {
       showState('idle');
-      setStatus('Analysis timed out (repo too large?)', true);
+      setStatus('分析超时（仓库太大？）', true);
     } else {
-      console.error('Analysis error:', e);
-      $('error-title').textContent = 'Analysis Failed';
-      $('error-msg').textContent = e.message || 'Unknown error';
+      $('error-title').textContent = '分析失败';
+      $('error-msg').textContent = e.message || '未知错误';
       showState('error');
     }
   } finally {
@@ -214,13 +151,10 @@ async function startAnalysis() {
 }
 
 function cancelAnalysis() {
-  if (abortController) {
-    abortController.abort();
-    abortController = null;
-  }
+  if (abortController) { abortController.abort(); abortController = null; }
 }
 
-// ── Render results ──
+// ── 渲染结果 ──
 
 function renderResults(report, repoUrl, usageInfo) {
   const repoName = repoUrl.replace('https://github.com/', '').replace(/\/$/, '');
@@ -228,36 +162,36 @@ function renderResults(report, repoUrl, usageInfo) {
 
   const score = report.score;
   const verdict = report.verdict;
-  const verdictLabels = { clean: 'Clean', suspicious: 'Suspicious', likely_slop: 'Likely AI Slop' };
-  const verdictClasses = { clean: 'verdict-clean', suspicious: 'verdict-suspicious', likely_slop: 'verdict-slop' };
-  const fillClasses = { clean: 'fill-clean', suspicious: 'fill-suspicious', likely_slop: 'fill-slop' };
+  const verdictLabels = { '干净': '干净', '可疑': '可疑', '极可能 AI 生成': '极可能 AI 生成' };
+  const verdictCssMap = { '干净': 'clean', '可疑': 'suspicious', '极可能 AI 生成': 'slop' };
+  const cssKey = verdictCssMap[verdict] || 'suspicious';
   const scoreColor = score >= 80 ? 'var(--green)' : score >= 40 ? 'var(--amber)' : 'var(--red)';
 
-  $('result-verdict-text').textContent = `${report.red_flags.length} red flag(s) detected`;
+  $('result-verdict-text').textContent = `发现 ${report.red_flags.length} 个红旗信号`;
 
-  // Score card
+  // 评分卡
   $('score-card').innerHTML = `
     <div class="score-header">
       <span class="score-number" style="color:${scoreColor}">${score}</span>
-      <div class="score-label">
-        <span class="score-verdict ${verdictClasses[verdict]}">${verdictLabels[verdict]}</span>
-        <div style="margin-top:4px">out of 100</div>
+      <div class="score-right">
+        <span class="score-verdict verdict-${cssKey}">${verdictLabels[verdict]}</span>
+        <div style="margin-top:4px;font-size:10px;color:var(--text-muted)">满分 100</div>
       </div>
     </div>
     <div class="score-bar">
-      <div class="score-bar-fill ${fillClasses[verdict]}" style="width:${score}%"></div>
+      <div class="score-bar-fill fill-${cssKey}" style="width:${score}%"></div>
     </div>
     <div class="score-stats">
-      <span>Files: ${report.stats.total_source_files ?? '?'}</span>
-      <span>Commits: ${report.stats.total_commits ?? '?'}</span>
-      <span>Contributors: ${report.stats.contributors ?? '?'}</span>
+      <span>文件：<strong>${report.stats.total_source_files ?? '?'}</strong></span>
+      <span>提交：<strong>${report.stats.total_commits ?? '?'}</strong></span>
+      <span>贡献者：<strong>${report.stats.contributors ?? '?'}</strong></span>
     </div>
   `;
 
-  // Red flags
+  // 红旗信号
   const flagsList = $('flags-list');
   if (report.red_flags && report.red_flags.length > 0) {
-    let html = '<div class="flags-title">Red Flags</div>';
+    let html = '<div class="flags-title">红旗信号</div>';
     for (const flag of report.red_flags) {
       const evidenceText = (flag.evidence || []).map(escapeHtml).join('\n');
       html += `
@@ -273,10 +207,10 @@ function renderResults(report, repoUrl, usageInfo) {
     flagsList.innerHTML = '';
   }
 
-  // Recommendations
+  // 改进建议
   const recs = $('recommendations');
   if (report.recommendations && report.recommendations.length > 0) {
-    let html = '<div class="recs-title">Recommendations</div>';
+    let html = '<div class="recs-title">改进建议</div>';
     for (const rec of report.recommendations) {
       html += `<div class="rec-item">${escapeHtml(rec)}</div>`;
     }
@@ -285,27 +219,23 @@ function renderResults(report, repoUrl, usageInfo) {
     recs.innerHTML = '';
   }
 
-  // Usage counter
+  // 使用次数
   const counter = $('usage-counter-2');
   if (counter) {
-    if (!usageInfo.activated) {
-      counter.innerHTML = `Free analyses: <strong>${usageInfo.remaining}</strong> remaining`;
+    if (usageInfo.activated) {
+      counter.innerHTML = '无限次（已激活）';
     } else {
-      counter.innerHTML = 'Unlimited analyses (activated)';
+      counter.innerHTML = `免费次数：<strong>${usageInfo.remaining}</strong> 次`;
     }
   }
 }
 
-// ── Activation ──
+// ── 激活 ──
 
 async function activateCode() {
   const code = ($('activation-code').value || '').trim();
   const statusEl = $('activate-status');
-
-  if (!code) {
-    statusEl.textContent = 'Enter an activation code.';
-    return;
-  }
+  if (!code) { statusEl.textContent = '请输入激活码'; return; }
 
   const serverUrl = await getServerUrl();
   try {
@@ -321,7 +251,7 @@ async function activateCode() {
       statusEl.textContent = data.message;
       setTimeout(() => {
         showState('idle');
-        setStatus('Activated! Unlimited analyses unlocked.', false);
+        setStatus('激活成功！无限次已解锁', false);
       }, 1500);
     } else {
       statusEl.style.color = 'var(--red)';
@@ -329,46 +259,30 @@ async function activateCode() {
     }
   } catch (e) {
     statusEl.style.color = 'var(--red)';
-    statusEl.textContent = 'Cannot reach server. Is it running?';
+    statusEl.textContent = '连接失败，服务器在跑吗？';
   }
 }
 
-// ── Init ──
+// ── 初始化 ──
 
 async function init() {
-  console.log('AI Slop Detector popup init');
   try {
     await prefillRepoUrl();
     await checkServer();
-
     const { remaining, activated } = await getUsageInfo();
     if (activated) {
-      $('usage-counter').innerHTML = 'Unlimited analyses <strong>(activated)</strong>';
+      $('usage-counter').innerHTML = '无限次 <strong>（已激活）</strong>';
     } else {
       $('remaining-count').textContent = remaining;
     }
-
-    // Focus input
-    setTimeout(() => {
-      const input = $('repo-url');
-      if (input) input.focus();
-    }, 150);
-
-    console.log('Init complete');
-  } catch (e) {
-    console.error('Init error:', e);
-  }
+    setTimeout(() => { const input = $('repo-url'); if (input) input.focus(); }, 150);
+  } catch (e) {}
 }
 
 document.addEventListener('DOMContentLoaded', init);
 
-// Enter key handlers
+// Enter 快捷键
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && currentState === 'idle') {
-    e.preventDefault();
-    startAnalysis();
-  } else if (e.key === 'Enter' && currentState === 'paywall') {
-    e.preventDefault();
-    activateCode();
-  }
+  if (e.key === 'Enter' && currentState === 'idle') { e.preventDefault(); startAnalysis(); }
+  if (e.key === 'Enter' && currentState === 'paywall') { e.preventDefault(); activateCode(); }
 });

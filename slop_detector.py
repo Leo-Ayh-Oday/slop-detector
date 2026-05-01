@@ -179,18 +179,18 @@ class SlopDetector:
         evidence = []
 
         if total == 0:
-            return 3.0, ["Unable to analyze commit history"]
+            return 3.0, ["无法分析提交历史"]
 
         score = 0.0
         if total <= 2:
             score = 10.0
-            evidence.append(f"Only {total} commit(s) total")
+            evidence.append(f"仅 {total} 次提交")
         elif total <= 5:
             score = 7.0
-            evidence.append(f"Only {total} commits — very low for a real project")
+            evidence.append(f"仅 {total} 次提交——真实项目很少这么少")
         elif total <= 10:
             score = 4.0
-            evidence.append(f"Only {total} commits — below typical for sustained development")
+            evidence.append(f"仅 {total} 次提交——低于正常开发标准")
 
         massive_count = 0
         massive_lines = []
@@ -203,7 +203,7 @@ class SlopDetector:
 
         if total > 0 and massive_count / min(total, 100) > 0.5:
             score = max(score, 8.0)
-            evidence.append(f"{massive_count}/{min(total,100)} commits exceed 500 lines")
+            evidence.append(f"{massive_count}/{min(total,100)} 次提交超过 500 行")
             evidence.extend(massive_lines[:5])
 
         if evidence:
@@ -259,10 +259,10 @@ class SlopDetector:
         if score > 0:
             top_generics = Counter(n for _, n in generic_hits).most_common(5)
             evidence.append(
-                f"{generic_count}/{total_idents} identifiers are generic ({ratio:.1%}) "
-                f"across {files_with_generics} files"
+                f"{generic_count}/{total_idents} 个标识符名称过于宽泛 ({ratio:.1%})，"
+                f"分布在 {files_with_generics} 个文件中"
             )
-            evidence.append(f"Top offenders: {', '.join(f'{n}({c}x)' for n, c in top_generics)}")
+            evidence.append(f"高频泛词: {', '.join(f'{n}({c}次)' for n, c in top_generics)}")
 
         return score, evidence
 
@@ -319,11 +319,11 @@ class SlopDetector:
 
         if slop_comment_count > 0:
             score = max(score, min(10.0, slop_comment_count * 1.5))
-            evidence.append(f"{slop_comment_count} obvious/redundant comments detected")
+            evidence.append(f"发现 {slop_comment_count} 条废话注释")
             evidence.extend(slop_examples)
 
         if score > 0 and not evidence:
-            evidence.append(f"Comment-to-code ratio: {comment_ratio:.1%}")
+            evidence.append(f"注释代码比: {comment_ratio:.1%}")
 
         return score, evidence
 
@@ -369,14 +369,14 @@ class SlopDetector:
 
         if not has_tests and readme_claims:
             score = 10.0
-            evidence.append("0 test files found but README claims production quality")
+            evidence.append("0 个测试文件，但 README 自称"生产就绪"")
             evidence.extend(readme_claims[:3])
         elif not has_tests:
             score = 7.0
-            evidence.append("No test files or test directories found")
+            evidence.append("未找到任何测试文件或测试目录")
         elif len(test_files) < 3 and len(test_dirs) == 0:
             score = 4.0
-            evidence.append(f"Only {len(test_files)} test file(s) — minimal coverage")
+            evidence.append(f"仅 {len(test_files)} 个测试文件——覆盖率极低")
         else:
             return 0.0, []
 
@@ -425,8 +425,8 @@ class SlopDetector:
                 unique_unknowns.append((fname, pkg, lang))
 
         count = len(unique_unknowns)
-        evidence = [f"{count} potentially unknown import(s) detected"]
-        evidence.extend(f"{pkg} ({lang}) in {f}" for f, pkg, _ in unique_unknowns[:5])
+        evidence = [f"发现 {count} 个疑似不存在的包引用"]
+        evidence.extend(f"{pkg} ({lang}) 位于 {f}" for f, pkg, _ in unique_unknowns[:5])
 
         if count >= 5:
             return 10.0, evidence
@@ -449,11 +449,11 @@ class SlopDetector:
 
         if count == 1:
             name = contributors[0] if isinstance(contributors[0], str) else contributors[0].get("name", "unknown")
-            return 10.0, [f"Single contributor: {name}"]
+            return 10.0, [f"唯一贡献者: {name}"]
         elif count == 2:
-            return 5.0, [f"Only {count} contributors"]
+            return 5.0, [f"仅 {count} 个贡献者"]
         elif count <= 3:
-            return 2.0, [f"Only {count} contributors"]
+            return 2.0, [f"仅 {count} 个贡献者"]
 
         return 0.0, []
 
@@ -484,12 +484,12 @@ class SlopDetector:
 
         if best_ratio > 0.7:
             score = 10.0 if best_ratio > 0.9 else 7.0
-            evidence = [f"File structure matches '{best_match}' template ({best_ratio:.0%})"]
+            evidence = [f"文件结构与 '{best_match}' 脚手架模板高度重合 ({best_ratio:.0%})"]
             return score, evidence
         elif best_ratio > 0.5:
-            return 5.0, [f"Partial match to '{best_match}' template ({best_ratio:.0%})"]
+            return 5.0, [f"部分匹配 '{best_match}' 模板 ({best_ratio:.0%})"]
         elif best_ratio > 0.3:
-            return 3.0, [f"Some resemblance to '{best_match}' template ({best_ratio:.0%})"]
+            return 3.0, [f"与 '{best_match}' 模板有些相似 ({best_ratio:.0%})"]
 
         return 0.0, []
 
@@ -529,8 +529,8 @@ class SlopDetector:
             score = 0.0
 
         if score > 0:
-            evidence.append(f"{len(spray_branches)}/{total_branches} branches have spray-pattern names")
-            evidence.append(f"Examples: {', '.join(spray_branches[:5])}")
+            evidence.append(f"{len(spray_branches)}/{total_branches} 个分支名称随意")
+            evidence.append(f"示例: {', '.join(spray_branches[:5])}")
 
         return score, evidence
 
@@ -567,7 +567,7 @@ class SlopDetector:
             return 0.0, []
 
         density = placeholder_count / (total_lines / 1000)  # per 1K LOC
-        evidence = [f"{placeholder_count} placeholders/TODOs ({density:.1f} per 1K LOC)"]
+        evidence = [f"{placeholder_count} 个占位符/TODO（每千行 {density:.1f} 个）"]
 
         if density > 20:
             return 10.0, evidence
@@ -685,11 +685,11 @@ class SlopDetector:
         final_score = max(0, min(100, final_score))
 
         if final_score >= 80:
-            verdict = "clean"
+            verdict = "干净"
         elif final_score >= 40:
-            verdict = "suspicious"
+            verdict = "可疑"
         else:
-            verdict = "likely_slop"
+            verdict = "极可能 AI 生成"
 
         return {
             "score": final_score,
@@ -701,15 +701,15 @@ class SlopDetector:
 
     def _add_recommendation(self, flag_id: str):
         recs = {
-            "commit_bombing": "Break up large commits into logical chunks for reviewability",
-            "generic_naming": "Replace generic variable names (data, temp, result) with domain-specific names",
-            "over_commenting": "Remove obvious comments. Code should be self-documenting with clear names",
-            "no_tests": "Add unit tests — no test files found for a project claiming production readiness",
-            "hallucinated_imports": "Verify all imported packages exist in the target language's package registry",
-            "single_contributor": "Review code history — single-contributor repos are common in AI-generated projects",
-            "template_structure": "Project appears to be based on a stock template with minimal modification",
-            "spray_pray_prs": "Clean up branch clutter and use meaningful branch names",
-            "placeholder_todos": "Resolve or remove TODO/FIXME/HACK placeholders before claiming completion",
+            "commit_bombing": "将大量提交拆分为逻辑清晰的增量提交，提高可审查性",
+            "generic_naming": "将 data/temp/result 等泛词替换为领域相关的具体名称",
+            "over_commenting": "删除废话注释，代码应当通过清晰的命名自我解释",
+            "no_tests": "补充单元测试——没有测试就别宣称"生产就绪"",
+            "hallucinated_imports": "检查所有 import 的包是否真实存在于对应语言的注册表中",
+            "single_contributor": "复查代码历史——单人仓库在 AI 生成项目中非常常见",
+            "template_structure": "项目似乎基于脚手架模板且几乎未做修改",
+            "spray_pray_prs": "清理杂乱分支，使用有意义的分支名称",
+            "placeholder_todos": "在宣称完成前解决或删除 TODO/FIXME/HACK 占位符",
         }
         if flag_id in recs:
             self.recommendations.append(recs[flag_id])

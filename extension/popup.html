@@ -1,113 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Slop Detector</title>
+<title>AI Slop 检测器</title>
 <link rel="stylesheet" href="popup.css">
 </head>
 <body>
 
-<!-- ── IDLE State ── -->
+<!-- ── 空闲状态 ── -->
 <div id="state-idle" class="state active">
   <div class="header">
     <div class="header-icon">S</div>
     <div class="header-text">
-      <h2>AI Slop Detector</h2>
-      <span>Detect AI-generated code patterns</span>
+      <h2>AI Slop 检测器</h2>
+      <span>识别 AI 生成的代码</span>
     </div>
   </div>
   <div class="input-group">
-    <label>GitHub Repository URL</label>
+    <label>GitHub 仓库地址</label>
     <input id="repo-url" type="text" placeholder="https://github.com/user/repo">
   </div>
-  <button class="btn" id="analyze-btn" onclick="startAnalysis()">Analyze Repository</button>
+  <button class="btn" id="analyze-btn" onclick="startAnalysis()">分析仓库</button>
   <div id="status-msg" class="status-text"></div>
   <div class="usage-counter" id="usage-counter">
-    Free analyses: <strong id="remaining-count">3</strong> remaining
+    免费次数：<strong id="remaining-count">3</strong> 次
   </div>
   <div class="footer">
-    <span id="server-indicator" class="server-offline">Server: checking...</span>
+    <span id="server-indicator" class="server-offline">服务器：检测中...</span>
     <span>v1.0</span>
   </div>
 </div>
 
-<!-- ── LOADING State ── -->
+<!-- ── 加载状态 ── -->
 <div id="state-loading" class="state">
   <div class="header">
     <div class="header-icon">S</div>
     <div class="header-text">
-      <h2>AI Slop Detector</h2>
-      <span>Analyzing repository...</span>
+      <h2>AI Slop 检测器</h2>
+      <span>分析中...</span>
     </div>
     <div class="header-actions">
-      <button class="header-btn" onclick="cancelAnalysis()">Cancel</button>
+      <button class="header-btn" onclick="cancelAnalysis()">取消</button>
     </div>
   </div>
   <div class="loading-spinner">
     <div class="spinner"></div>
-    <div class="loading-text" id="loading-status">Cloning repository...</div>
+    <div class="loading-text" id="loading-status">正在克隆仓库...</div>
   </div>
 </div>
 
-<!-- ── RESULTS State ── -->
+<!-- ── 结果状态 ── -->
 <div id="state-results" class="state">
   <div class="header">
     <div class="header-icon">S</div>
     <div class="header-text">
       <h2 id="result-repo-name">repo</h2>
-      <span id="result-verdict-text">Analysis complete</span>
+      <span id="result-verdict-text">分析完成</span>
     </div>
   </div>
   <div id="score-card" class="score-card fade-in"></div>
   <div id="flags-list"></div>
   <div id="recommendations"></div>
-  <button class="btn" style="margin-top:12px" onclick="showState('idle')">Analyze Another Repo</button>
+  <button class="btn" style="margin-top:12px" onclick="showState('idle')">再分析一个</button>
   <div class="usage-counter" id="usage-counter-2"></div>
 </div>
 
-<!-- ── PAYWALL State ── -->
+<!-- ── 付费墙 ── -->
 <div id="state-paywall" class="state">
   <div class="header">
     <div class="header-icon">S</div>
     <div class="header-text">
-      <h2>AI Slop Detector</h2>
-      <span>Unlock unlimited analyses</span>
+      <h2>AI Slop 检测器</h2>
+      <span>解锁无限次分析</span>
     </div>
   </div>
   <div class="paywall-card fade-in">
-    <h3>Free Limit Reached</h3>
-    <p>You've used all 3 free analyses.<br>Get unlimited access for <strong>$5/month</strong>.</p>
+    <h3>免费次数已用完</h3>
+    <p>3 次免费分析已用完。<br>无限次仅需 <strong>¥35 永久买断</strong>。</p>
     <div class="input-group">
       <input id="activation-code" type="text" placeholder="SLOP-XXXX-XXXX" style="text-align:center;font-family:var(--font-mono)">
     </div>
-    <button class="btn" onclick="activateCode()">Activate</button>
+    <button class="btn" onclick="activateCode()">激活</button>
     <div id="activate-status" class="status-text"></div>
-    <a class="paywall-link" href="https://afdian.com" target="_blank">Get code on Afdian →</a>
+    <a class="paywall-link" href="https://github.com/Leo-Ayh-Oday/slop-detector#%E8%B4%AD%E4%B9%B0%E6%BF%80%E6%B4%BB%E7%A0%81" target="_blank">如何获取激活码？</a>
   </div>
   <div class="footer" style="margin-top:12px">
-    <button class="header-btn" onclick="showState('idle')">← Back</button>
+    <button class="header-btn" onclick="showState('idle')">← 返回</button>
     <span>v1.0</span>
   </div>
 </div>
 
-<!-- ── ERROR State ── -->
+<!-- ── 错误状态 ── -->
 <div id="state-error" class="state">
   <div class="header">
     <div class="header-icon">S</div>
     <div class="header-text">
-      <h2>AI Slop Detector</h2>
-      <span>Connection Error</span>
+      <h2>AI Slop 检测器</h2>
+      <span>连接错误</span>
     </div>
   </div>
   <div class="error-card fade-in">
-    <h3 id="error-title">Server Unreachable</h3>
-    <p id="error-msg">Cannot connect to the analysis server.</p>
-    <p>Make sure the server is running:<br><code>python server.py</code></p>
-    <button class="btn btn-sm" onclick="checkServer()" style="margin-top:8px">Retry</button>
+    <h3 id="error-title">无法连接服务器</h3>
+    <p id="error-msg">检测不到本地服务器。</p>
+    <p>请先启动服务器：<br><code>python server.py</code></p>
+    <button class="btn btn-sm" onclick="checkServer()" style="margin-top:8px">重试</button>
   </div>
   <div class="footer" style="margin-top:12px">
-    <button class="header-btn" onclick="showState('idle')">← Back</button>
+    <button class="header-btn" onclick="showState('idle')">← 返回</button>
     <span>v1.0</span>
   </div>
 </div>
