@@ -2,7 +2,7 @@
 import json, os, re, shutil, tempfile, logging
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -34,6 +34,35 @@ if _codes_path.exists():
         ACTIVATION_CODES = set(data.get("codes", []))
     except Exception:
         logger.warning("Failed to load activation_codes.json")
+
+# IP-based usage tracking (prevents reinstall bypass)
+# {ip: {"count": int, "activated": bool}}
+_ip_usage: dict[str, dict] = {}
+FREE_LIMIT = 3
+
+
+def get_client_ip(request: Request) -> str:
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def check_ip_quota(ip: str) -> tuple[bool, int]:
+    """Returns (allowed, remaining). Activated IPs always allowed."""
+    if ip not in _ip_usage:
+        _ip_usage[ip] = {"count": 0, "activated": False}
+    entry = _ip_usage[ip]
+    if entry["activated"]:
+        return True, -1  # unlimited
+    remaining = FREE_LIMIT - entry["count"]
+    return remaining > 0, remaining
+
+
+def use_ip_quota(ip: str):
+    if ip not in _ip_usage:
+        _ip_usage[ip] = {"count": 0, "activated": False}
+    _ip_usage[ip]["count"] += 1
 
 # ── Pydantic models ──
 
@@ -335,18 +364,23 @@ async def status():
 
 
 @app.post("/api/slop")
-async def slop_endpoint(req: SlopRequest):
+async def slop_endpoint(slop_req: SlopRequest, request: Request):
     """Analyze a GitHub repo for AI-generated slop patterns."""
-    if not req.repo_url:
+    if not slop_req.repo_url:
         raise HTTPException(400, "repo_url required")
+
+    ip = get_client_ip(request)
+    allowed, remaining = check_ip_quota(ip)
+    if not allowed:
+        raise HTTPException(402, f"Free limit reached ({FREE_LIMIT} analyses). Get an activation code.")
 
     tmp = tempfile.mkdtemp(prefix="slop_")
     try:
         import git
         # Try requested branch first, fall back to common defaults
-        for branch in (req.branch, "main", "master"):
+        for branch in (slop_req.branch, "main", "master"):
             try:
-                git.Repo.clone_from(req.repo_url, tmp, branch=branch, depth=50)
+                git.Repo.clone_from(slop_req.repo_url, tmp, branch=branch, depth=50)
                 break
             except Exception:
                 shutil.rmtree(tmp, ignore_errors=True)
@@ -360,7 +394,12 @@ async def slop_endpoint(req: SlopRequest):
     repo_path = Path(tmp)
     git_data = _extract_git_data(repo_path)
     report = slop.analyze(repo_path, git_data=git_data)
-    report["repo"] = req.repo_url
+    report["repo"] = slop_req.repo_url
+
+    # Track usage
+    use_ip_quota(ip)
+    _, new_remaining = check_ip_quota(ip)
+    report["quota"] = {"remaining": new_remaining, "limit": FREE_LIMIT}
 
     # Cleanup temp dir
     shutil.rmtree(tmp, ignore_errors=True)
@@ -368,13 +407,17 @@ async def slop_endpoint(req: SlopRequest):
 
 
 @app.post("/api/activate")
-async def activate_endpoint(req: ActivateRequest):
+async def activate_endpoint(req: ActivateRequest, request: Request):
     """Validate an activation code."""
     import hashlib
     code_hash = hashlib.sha256(req.activation_code.strip().encode()).hexdigest()
     if code_hash in ACTIVATION_CODES:
-        return {"valid": True, "message": "Activated successfully. Unlimited analyses unlocked."}
-    return {"valid": False, "message": "Invalid activation code. Please check and try again."}
+        ip = get_client_ip(request)
+        if ip not in _ip_usage:
+            _ip_usage[ip] = {"count": 0, "activated": False}
+        _ip_usage[ip]["activated"] = True
+        return {"valid": True, "message": "激活成功，无限次已解锁。"}
+    return {"valid": False, "message": "激活码无效，请检查后重试。"}
 
 
 if __name__ == "__main__":

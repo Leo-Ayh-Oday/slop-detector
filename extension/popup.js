@@ -126,14 +126,15 @@ async function startAnalysis() {
     clearTimeout(timeoutId);
     clearTimeout(progressTimer);
 
+    if (resp.status === 402) { showState('paywall'); return; }
     if (!resp.ok) throw new Error((await resp.text()) || `服务器返回 ${resp.status}`);
 
     const report = await resp.json();
 
-    if (!activated) { await afterAnalysis(); }
-    const usageInfo = await getUsageInfo();
-
-    renderResults(report, url, usageInfo);
+    // Use server-side quota info
+    const quota = report.quota || {};
+    const remaining = quota.remaining;
+    renderResults(report, url, { remaining, activated, limit: quota.limit });
     showState('results');
   } catch (e) {
     clearTimeout(progressTimer);
@@ -224,8 +225,8 @@ function renderResults(report, repoUrl, usageInfo) {
   if (counter) {
     if (usageInfo.activated) {
       counter.innerHTML = '无限次（已激活）';
-    } else {
-      counter.innerHTML = `免费次数：<strong>${usageInfo.remaining}</strong> 次`;
+    } else if (usageInfo.remaining !== undefined && usageInfo.remaining >= 0) {
+      counter.innerHTML = `免费次数：<strong>${usageInfo.remaining}</strong> / ${usageInfo.limit || 3}`;
     }
   }
 }
